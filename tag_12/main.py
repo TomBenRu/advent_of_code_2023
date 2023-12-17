@@ -1,13 +1,14 @@
+import functools
 import itertools
 import re
 import sys
 import time
 
-with open('test_input.txt') as f:
+with open('input.txt') as f:
     data = [[line.split()[0], [int(n) for n in line.split()[1].split(',')]] for line in f.read().strip().splitlines()]
 
 part_2 = True
-factor = 1
+factor = 5
 if part_2:
     for line in data:
         line[0] = line[0] + ('?' + line[0]) * (factor - 1)
@@ -27,12 +28,18 @@ def pattern_from_groups(groups: list[int]) -> str:
 
 
 def pattern_from_groups_2(groups: list[int], num_groups: int) -> str:
-    pattern = r'\.*'
+    # sourcery skip: assign-if-exp, use-join
+    pattern = r''
     for i in range(num_groups):
-        if i == len(groups) -1:
-            pattern += f'#{{{groups[i]}}}\.*'
+        if i == 0:
+            pattern += f'\.*#{{{groups[i]}}}'
         else:
-            pattern += f'##{{{groups[i]}}}\.*'
+            try:
+                pattern += f'\.+#{{{groups[i]}}}'
+            except IndexError as e:
+                input(f'{e=}, {i=}, {groups=}')
+    if num_groups == len(groups):
+        pattern += '\.*'
     return pattern
 
 
@@ -53,37 +60,33 @@ def check_valid(springs_mod: str, pattern: str) -> bool:
     return bool(re.fullmatch(pattern, springs_mod))
 
 
-def check_valid_2(springs_mod: str, pattern: str) -> bool:
-    return bool(re.match(pattern, springs_mod))
+def check_valid_2(springs_mod: str, pattern: str, final=False) -> tuple[bool, int | None]:
+    match = re.fullmatch(pattern, springs_mod) if final else re.match(pattern, springs_mod)
+    return bool(match), match.end() - 1 if match else None
 
 
-def find_results_2(curr_springs: str, groups: list[int], index_last_input: int, index_last_group: int):
-    sure_broken = curr_springs.count('#')
-    sum_broken = sum(groups)
-    pattern = pattern_from_groups_2(groups, index_last_group + 2)
-    broken_springs_to_put_in = sum_broken - sure_broken
-    if not broken_springs_to_put_in and check_valid(curr_springs, pattern):
-        sum_possible_strings[0] += 1
-        return True
-    indexes_question_marks = [i for i in range(index_last_input+1, len(curr_springs)) if curr_springs[i] == '?']
+@functools.cache
+def find_results_2(curr_springs: str, groups: tuple[int, ...]) -> int:
+    curr_springs = curr_springs.lstrip('.')
+    if not curr_springs:
+        return not groups
+    if not groups:
+        return '#' not in curr_springs
+    if curr_springs[0] == '#':
+        if len(curr_springs) < groups[0]:
+            return 0
+        if '.' in curr_springs[:groups[0]]:
+            return 0
+        if curr_springs[groups[0]] == '#':
+            return 0
+        return find_results_2(curr_springs[groups[0]+1:], tuple(groups[1:]))
 
-    curr_group = groups[index_last_group+1]
-    all_new_springs = [curr_springs]
-    for g in range(curr_group):
-        for q in indexes_question_marks:
-            for i in range(g):
-                new_springs = all_new_springs[-1][:q] + '#'
-            new_springs += '.' if all_new_springs[-1][q+1] in {'.', }
+    return find_results_2('#' + curr_springs[1:], groups) + find_results_2(curr_springs[1:], groups)
 
-    for i in indexes_question_marks:
-        for j in range(curr_group):
-            new_springs = new_springs[:i] + '#' + curr_springs[i+1+j:]
-            if check_valid_2(new_springs+'.', pattern):
-                find_results_2(new_springs+'.', groups, i + j, index_last_group+1)
-    return False
 
 
 def find_results(curr_springs: str, groups: list[int], pattern: str, index_last_input: int):
+    # sourcery skip: use-fstring-for-concatenation
     sure_broken = curr_springs.count('#')
     sum_broken = sum(groups)
     broken_springs_to_put_in = sum_broken - sure_broken
@@ -115,11 +118,16 @@ def find_results(curr_springs: str, groups: list[int], pattern: str, index_last_
 
 t0 = time.time()
 sum_possible_strings = [0]
+sum_possible_strings_2 = 0
+all_current_springs = set()
 for i, (springs, groups) in enumerate(data, start=1):
-    print(f'{springs=}, {groups=} --------------------------------------------------------------')
+    all_current_springs = set()
+    # if i != 3: continue
+    # print(f'{springs=}, {groups=} --------------------------------------------------------------')
     pattern = pattern_from_groups(groups)
     # find_results(springs, groups, pattern, -1)
-    find_results_2(springs, groups, -1, -1)
-    print(f'{sum_possible_strings[0]=}, remaining: {len(data) - i}, Zeit: {int(time.time()-t0)}')
+    sum_possible_strings_2 += find_results_2(springs + '.', tuple(groups))
 
-print(f'{sum_possible_strings[0]=}')
+    # print(f'{sum_possible_strings_2=}, done: {i} / {len(data)}, Zeit: {int(time.time()-t0)}')
+
+print(f'{sum_possible_strings_2=}')

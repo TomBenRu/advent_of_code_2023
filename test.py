@@ -1,11 +1,10 @@
-import re
+# Ihre Matrix
+matrix = [[1, 2, 3],
+          [4, 5, 6]]
 
-def check_string(s, num1, num2, num3):
-    pattern = f'\\.*[#?]{{{num1}}}\\.+[#?]{{{num2}}}\\.+[#?]{{{num3}}}'
-    return bool(re.match(pattern, s))
+# Drehen Sie die Matrix um 90 Grad
+rotated_matrix = [col[::-1] for col in zip(*matrix[::-1])]
+rotated_matrix = zip(*matrix)
 
-num1 = 4
-num2 = 2
-num3 = 3
-s = '..####..##...###.....'
-print(check_string(s, num1, num2, num3))  # Ausgabe: True
+for row in rotated_matrix:
+    print(row)
