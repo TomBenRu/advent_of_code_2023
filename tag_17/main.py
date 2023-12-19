@@ -60,20 +60,15 @@ def min_lost(part_1: bool):
         for y, x in get_next_directions(t):
             sum_heat_loss = t.sum_heat_loss
             new_path = []
-            if not part_1:
-                for i in range(1, 4):
-                    new_coord = t.coord[0] + y * i, t.coord[1] + x * i
-                    if new_coord not in hashed_data:
-                        break
-                    sum_heat_loss += hashed_data[new_coord]
-                    new_path += [new_coord]
-            steps = range(1, 4) if part_1 else range(4, 11)
+            steps = range(1, 4) if part_1 else range(1, 11)
             for s in steps:
                 new_coord = t.coord[0] + y * s, t.coord[1] + x * s
                 if new_coord not in hashed_data:
                     break
                 sum_heat_loss += hashed_data[new_coord]
                 new_path += [new_coord]
+                if not part_1 and s < 4:
+                    continue
                 new_tile_node = TileNode(new_coord, (y, x), hashed_data[new_coord],
                                          sum_heat_loss, t.path + new_path)
                 # input(f'{new_tile_node=}')
