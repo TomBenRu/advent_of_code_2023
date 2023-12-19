@@ -79,7 +79,6 @@ def transform_backslash(tile_coord, direction):
 
 def pass_tile(tile_coord, direction):
     if tile_coord in hashed_data:
-        # input(f'{tile_coord=}, {direction=}, {hashed_data[tile_coord]=}')
         energized_tiles[tile_coord] += 1
         if (tile_coord, direction) in visited:
             return False
