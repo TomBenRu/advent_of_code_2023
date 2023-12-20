@@ -1,20 +1,6 @@
-import heapq
+import shapely
 
-class Person:
-    def __init__(self, name, age):
-        self.name = name
-        self.age = age
+polygon = shapely.Polygon(((0, 0), (0, 4), (4, 4), (4, 0)))
 
-    def __lt__(self, other):
-        return (self.age, self.name) < (other.age, other.name)
-
-people = [
-    Person('Alice', 30),
-    Person('Bob', 20),
-    Person('Charlie', 20)
-]
-
-heapq.heapify(people)
-
-youngest_person = heapq.heappop(people)
-print(youngest_person.name)  # Gibt 'Bob' aus
+print(polygon.area)
+print(polygon.length)
